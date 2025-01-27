@@ -43,7 +43,7 @@ class HomePage(QWidget):
 
         self.logo_label = QLabel(self)
         self.logo_label.setAlignment(Qt.AlignCenter)
-        pixmap = QPixmap('C:/Users/rupal/Downloads/matchpoint_logo_white.png')
+        pixmap = QPixmap('matchpoint_logo_white.png')
         self.logo_label.setPixmap(pixmap.scaled(400, 400, Qt.KeepAspectRatio))
         layout.addWidget(self.logo_label)
 
