@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MatchPoint.ai</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -13,11 +14,18 @@
     </style>
 </head>
 <body class="font-sans text-gray-800">
-    <header class="bg-green-600 text-white py-4 shadow-md">
-        <div class="container mx-auto text-center">
-            <h1 class="text-3xl font-bold">MatchPoint.ai</h1>
-        </div>
-    </header>
+<header class="bg-green-600 text-white py-4 shadow-md">
+    <div class="container mx-auto flex justify-between items-center px-4">
+        <h1 class="text-3xl font-bold">MatchPoint.ai</h1>
+        <nav>
+            <ul class="flex space-x-4">
+                <li><a href="/" class="hover:underline">Home</a></li>
+                <li><a href="/ai-platform" class="hover:underline">AI Platform</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
 
     <main class="container mx-auto mt-8 px-4">
         <section class="bg-white p-6 rounded-lg shadow-md">
