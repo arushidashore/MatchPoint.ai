@@ -5,6 +5,9 @@ import tensorflow as tf
 import tensorflow_hub as hub
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import logging  # Import logging
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -20,6 +23,50 @@ logging.basicConfig(level=logging.DEBUG)  # Set log level to DEBUG
 # Load MoveNet model
 movenet = hub.KerasLayer("https://tfhub.dev/google/movenet/singlepose/lightning/4",
                          signature="serving_default", signature_outputs_as_dict=True)
+
+# Placeholder for stroke classification model
+# stroke_classifier = hub.KerasLayer("https://tfhub.dev/google/vision-transformer/small/1", 
+#                                    signature="serving_default", signature_outputs_as_dict=True)
+
+# Initialize JWT and SQLAlchemy
+app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # Replace with a secure key
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+jwt = JWTManager(app)
+db = SQLAlchemy(app)
+
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
+
+# Define database models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    elbow_angles = db.Column(db.JSON, nullable=False)
+    knee_angles = db.Column(db.JSON, nullable=False)
+    racket_velocity = db.Column(db.Float, nullable=False)
+    feedback_text = db.Column(db.Text, nullable=False)
+
+# Add gamification models
+class Badge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    description = db.Column(db.String(200), nullable=False)
+
+class Player(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    xp = db.Column(db.Integer, default=0)
+    badges = db.relationship('Badge', secondary='player_badges', backref='players')
+
+player_badges = db.Table('player_badges',
+    db.Column('player_id', db.Integer, db.ForeignKey('player.id'), primary_key=True),
+    db.Column('badge_id', db.Integer, db.ForeignKey('badge.id'), primary_key=True)
+)
 
 def analyze_swing(video_path, height, stroke_type):
     """Analyzes the tennis swing and generates feedback."""
@@ -154,8 +201,17 @@ def calculate_angle(a, b, c):
     angle = np.arccos(cosine_angle)
     return np.degrees(angle)
 
-@app.route('/', methods=['GET'])
-def index():
+def classify_stroke(video_path):
+    """Classifies the stroke type from the video."""
+    logging.warning("Stroke classification is temporarily disabled.")
+    return "Stroke classification disabled"
+
+@app.route('/')
+def landing():
+    return render_template('landing.html')
+
+@app.route('/ai-platform')
+def ai_platform():
     return render_template('index.html')
 
 @app.route('/analyze', methods=['POST'])
@@ -175,6 +231,63 @@ def analyze():
 def serve_static(filename):
     logging.debug(f"Serving static file: {filename}") # Log the requested filename
     return send_from_directory(app.config["OUTPUT_FOLDER"], filename)
+
+@app.route('/feedback', methods=['POST'])
+@jwt_required()
+def feedback():
+    user_id = request.json.get('user_id')
+    elbow_angles = request.json.get('elbow_angles')
+    knee_angles = request.json.get('knee_angles')
+    racket_velocity = request.json.get('racket_velocity')
+    feedback_text = request.json.get('feedback_text')
+
+    feedback_entry = Feedback(
+        user_id=user_id,
+        elbow_angles=elbow_angles,
+        knee_angles=knee_angles,
+        racket_velocity=racket_velocity,
+        feedback_text=feedback_text
+    )
+    db.session.add(feedback_entry)
+    db.session.commit()
+
+    return jsonify({"message": "Feedback saved successfully!"}, 201)
+
+@app.route('/history', methods=['GET'])
+@jwt_required()
+def history():
+    user_id = request.args.get('user_id')
+    feedback_entries = Feedback.query.filter_by(user_id=user_id).all()
+    return jsonify([{
+        "elbow_angles": entry.elbow_angles,
+        "knee_angles": entry.knee_angles,
+        "racket_velocity": entry.racket_velocity,
+        "feedback_text": entry.feedback_text
+    } for entry in feedback_entries])
+
+@app.route('/gamification', methods=['GET'])
+@jwt_required()
+def gamification():
+    user_id = request.args.get('user_id')
+    player = Player.query.filter_by(id=user_id).first()
+    if not player:
+        return jsonify({'error': 'Player not found'}), 404
+
+    badges = [{'name': badge.name, 'description': badge.description} for badge in player.badges]
+    return jsonify({'xp': player.xp, 'badges': badges})
+
+@app.route('/add-xp', methods=['POST'])
+@jwt_required()
+def add_xp():
+    user_id = request.json.get('user_id')
+    xp = request.json.get('xp')
+    player = Player.query.filter_by(id=user_id).first()
+    if not player:
+        return jsonify({'error': 'Player not found'}), 404
+
+    player.xp += xp
+    db.session.commit()
+    return jsonify({'message': 'XP added successfully', 'new_xp': player.xp})
 
 if __name__ == '__main__':
     app.run(debug=True)
