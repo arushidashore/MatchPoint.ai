@@ -1,48 +1,123 @@
-<source src="" type="video/mp4"> <!-- The src will be dynamically set -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MatchPoint.ai</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #e8f5e9, #a5d6a7);
+        }
+    </style>
 </head>
-<body>
-    <h1>MatchPoint.ai</h1>
-    <form id="upload-form" enctype="multipart/form-data">
-        <label for="height">Enter your height (cm):</label>
-        <input type="number" id="height" name="height" required><br><br>
+<body class="font-sans text-gray-800">
+    <header class="bg-green-600 text-white py-4 shadow-md">
+        <div class="container mx-auto text-center">
+            <h1 class="text-3xl font-bold">MatchPoint.ai</h1>
+        </div>
+    </header>
 
-        <label for="stroke_type">Select stroke type:</label>
-        <select id="stroke_type" name="stroke_type" required>
-            <option value="Forehand">Forehand</option>
-            <option value="Backhand">Backhand</option>
-        </select><br><br>
+    <main class="container mx-auto mt-8 px-4">
+        <section class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Analyze Your Swing</h2>
+            <form id="upload-form" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label for="height" class="block text-sm font-medium">Enter your height (cm):</label>
+                    <input type="number" id="height" name="height" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
 
-        <input type="file" name="video" accept="video/*" required>
-        <button type="submit">Analyze Swing</button>
-    </form>
+                <div>
+                    <label for="stroke_type" class="block text-sm font-medium">Select stroke type:</label>
+                    <select id="stroke_type" name="stroke_type" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="Forehand">Forehand</option>
+                        <option value="Backhand">Backhand</option>
+                    </select>
+                </div>
 
-    <div id="result"></div>
-    <video id="annotated_video" width="640" height="480" controls>
-        <source src="" type="video/mp4"> <!-- The src will be dynamically set -->
-        Your browser does not support the video tag.
-    </video>
+                <div>
+                    <label for="video" class="block text-sm font-medium">Upload your video:</label>
+                    <input type="file" name="video" accept="video/*" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+
+                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">Analyze Swing</button>
+            </form>
+        </section>
+
+        <section id="result-section" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Results</h2>
+            <p id="result" class="text-lg"></p>
+            <video id="annotated_video" width="640" height="480" controls class="mt-4 hidden">
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </section>
+
+        <section id="feedback-dashboard" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Feedback Dashboard</h2>
+            <div id="charts-container"></div>
+        </section>
+
+        <section id="player-profile" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Player Profile</h2>
+            <p>Name: <span id="player-name">John Doe</span></p>
+            <p>XP: <span id="player-xp">1200</span></p>
+            <p>Badges:</p>
+            <ul id="player-badges" class="list-disc pl-5">
+                <li>Beginner Badge</li>
+                <li>Consistency Badge</li>
+            </ul>
+        </section>
+
+        <section id="performance-history" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Performance History</h2>
+            <table class="table-auto w-full border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-300 px-4 py-2">Date</th>
+                        <th class="border border-gray-300 px-4 py-2">Stroke Type</th>
+                        <th class="border border-gray-300 px-4 py-2">Feedback</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table"></tbody>
+            </table>
+        </section>
+
+        <section id="analytics-dashboard" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Analytics Dashboard</h2>
+            <canvas id="retention-chart" class="mb-4"></canvas>
+            <canvas id="improvement-chart"></canvas>
+        </section>
+    </main>
+
+    <footer class="bg-green-600 text-white py-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 MatchPoint.ai. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script>
         document.getElementById('upload-form').onsubmit = async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            document.getElementById('result').textContent = "Analyzing...";
+            const resultSection = document.getElementById('result-section');
+            const resultText = document.getElementById('result');
+            const video = document.getElementById('annotated_video');
+
+            resultSection.classList.remove('hidden');
+            resultText.textContent = "Analyzing...";
+            video.classList.add('hidden');
+
             const res = await fetch('/analyze', { method: 'POST', body: formData });
             const data = await res.json();
 
             if (data.error) {
-                document.getElementById('result').textContent = "Error: " + data.error;
-                document.getElementById('annotated_video').src = "";  // Clear video
+                resultText.textContent = "Error: " + data.error;
             } else {
-                document.getElementById('result').textContent = "Coach's Feedback: " + data.feedback;
-                document.getElementById('annotated_video').src = data.video_path;
+                resultText.textContent = "Coach's Feedback: " + data.feedback;
+                video.src = data.video_path;
+                video.classList.remove('hidden');
             }
         };
     </script>
