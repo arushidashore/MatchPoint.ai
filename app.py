@@ -129,30 +129,104 @@ def analyze_swing(video_path, height, stroke_type):
     avg_knee_angle = np.mean(knee_angles) if knee_angles else 0
 
     feedback = []
-    if avg_elbow_angle < 90:
-        feedback.append("Keep your elbow higher during the swing.")
-    if avg_knee_angle > 160:
-        feedback.append("Bend your knees more for better balance and power.")
+    if avg_elbow_angle < 50:
+        feedback.append(
+            "🟥 Your elbow is extremely low, severely limiting power and increasing injury risk. "
+            "Focus on drills to keep your elbow raised at shoulder height during the swing."
+        )
+    elif avg_elbow_angle < 70:
+        feedback.append(
+            "🟧 Elbow is low, restricting swing speed and control. Keep practicing raising your elbow during your swings."
+        )
+    elif avg_elbow_angle < 90:
+        feedback.append(
+            "🟨 Elbow position is slightly low. Raising it will help increase power and consistency."
+        )
+    elif avg_elbow_angle <= 110:
+        feedback.append(
+            "🟩 Great elbow position! This helps generate power and consistent contact."
+        )
+    else:
+        feedback.append(
+            "🟨 Your elbow is a bit too high, which can cause late contact or overextension. "
+            "Work on smooth, relaxed swings with good follow-through."
+        )
 
-    # Analyze racket velocity and path
-    if racket_positions:
-        velocities = [np.linalg.norm(racket_positions[i] - racket_positions[i - 1]) for i in
-                      range(1, len(racket_positions))]
+    if avg_knee_angle > 180:
+        feedback.append(
+            "🟥 Your knees are fully locked, which kills balance and power. Bend more before swinging."
+        )
+    elif avg_knee_angle > 170:
+        feedback.append(
+            "🟧 Knees too straight, limiting balance and power generation. Try to lower your center of gravity."
+        )
+    elif avg_knee_angle > 150:
+        feedback.append(
+            "🟨 Knee bend is okay but could be improved. Lower your stance slightly for better stability."
+        )
+    elif avg_knee_angle > 120:
+        feedback.append(
+            "🟩 Good knee bend, supporting power and balance."
+        )
+    else:
+        feedback.append(
+            "🟦 Excellent knee bend! This maximizes power and stability during your swings."
+        )
+
+    if racket_positions and len(racket_positions) > 1:
+        velocities = [np.linalg.norm(np.array(racket_positions[i]) - np.array(racket_positions[i - 1]))
+                      for i in range(1, len(racket_positions))]
         avg_velocity = np.mean(velocities)
-        if avg_velocity < 5:
-            feedback.append("Accelerate through the ball for more power.")
-        else:
-            feedback.append("Good acceleration through the ball.")
 
-        # Check for stable/linear path
-        path_variation = np.std([pos[1] for pos in racket_positions])
-        if path_variation > 10:
-            feedback.append("Try to keep the racket path more stable and linear.")
+        if avg_velocity < 2:
+            feedback.append(
+                "🟥 Your swing speed is very slow. Focus on accelerating through contact using your hips and shoulders."
+            )
+        elif avg_velocity < 4:
+            feedback.append(
+                "🟧 Swing speed is low; work on driving your swing through the ball to generate more power."
+            )
+        elif avg_velocity < 6:
+            feedback.append(
+                "🟨 Decent swing speed but room to increase power and explosiveness."
+            )
+        elif avg_velocity < 8:
+            feedback.append(
+                "🟩 Good swing speed! You're generating solid racket acceleration."
+            )
         else:
-            feedback.append("Good stable racket path.")
+            feedback.append(
+                "🟦 Excellent racket speed — you're swinging with power and efficiency."
+            )
+
+        path_variation = np.std([pos[1] for pos in racket_positions])
+
+        if path_variation > 20:
+            feedback.append(
+                "🟥 Your racket path is very unstable, leading to inconsistent shots. Practice keeping a smooth and linear swing."
+            )
+        elif path_variation > 15:
+            feedback.append(
+                "🟧 Your racket path is unstable. Focus on controlling your swing arc for better contact."
+            )
+        elif path_variation > 10:
+            feedback.append(
+                "🟨 Your swing path is somewhat stable but can be smoother."
+            )
+        elif path_variation > 5:
+            feedback.append(
+                "🟩 Good stable racket path, which supports consistent hitting."
+            )
+        else:
+            feedback.append(
+                "🟦 Excellent racket path control! Your swing is smooth and repeatable."
+            )
+    else:
+        feedback.append("⚠️ Not enough data to analyze racket velocity and path.")
 
     if not feedback:
-        feedback.append("Your form looks good! Keep practicing.")
+        feedback.append("✅ Your form looks good! Keep practicing.")
+
 
     return " ".join(feedback), '/static/output.mp4'
 

@@ -1,52 +1,323 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MatchPoint.ai</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <!-- Custom Fonts & Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f9fbfd;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Hero Image Banner */
+        .hero-image {
+            opacity: 0;
+            animation: fadeIn 1.2s ease forwards;
+            animation-delay: 0.2s;
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: url('https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&fit=crop&w=1350&q=80') center center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        .hero-image::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(30, 64, 175, 0.6); /* blue overlay */
+            z-index: 0;
+        }
+        .hero-image-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 700px;
+            padding: 0 1.5rem;
+        }
+        .hero-image-content h1 {
+            color: #f3f4f6; /* near white */
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.75rem;
+            text-shadow: 0 0 12px rgba(0,0,0,0.45);
+            line-height: 1.1;
+        }
+        .hero-image-content p {
+            color: #dbeafe; /* lighter blue */
+            font-weight: 600;
+            font-size: 1.25rem;
+            text-shadow: 0 0 8px rgba(0,0,0,0.3);
+            line-height: 1.5;
+            margin-bottom: 1.75rem;
+        }
+        .hero-image-content a.btn {
+            background-color: #f3f4f6;
+            color: #1e40af;
+            font-weight: 700;
+            padding: 1rem 3rem;
+            border-radius: 9999px;
+            box-shadow: 0 8px 24px rgb(243 244 246 / 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: inline-block;
+            user-select: none;
+            text-decoration: none;
+        }
+        .hero-image-content a.btn:hover,
+        .hero-image-content a.btn:focus-visible {
+            background-color: #e0e7ff;
+            transform: translateY(-3px);
+            outline-offset: 3px;
+            outline-color: #93c5fd;
+            outline-style: solid;
+            outline-width: 2px;
+            text-decoration: none;
+        }
+
+        header {
+            background: #1e40af; /* Strong blue */
+            box-shadow: 0 2px 8px rgb(30 64 175 / 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 1rem 0;
+        }
+        header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: #e0e7ff; /* light blue */
+            letter-spacing: 0.1em;
+            user-select: none;
+        }
+        nav ul {
+            display: flex;
+            gap: 2rem;
+        }
+        nav ul li a {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #c7d2fe;
+            text-decoration: none;
+            padding-bottom: 0.25rem;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.3s ease, color 0.3s ease;
+            user-select: none;
+        }
+        nav ul li a:hover,
+        nav ul li a:focus-visible {
+            color: #f3f4f6; /* near white */
+            border-bottom-color: #e0e7ff;
+            outline-offset: 4px;
+            outline-color: #93c5fd;
+            outline-style: solid;
+            outline-width: 2px;
+        }
+
+        main {
+            flex-grow: 1;
+            max-width: 960px;
+            margin: 4rem auto 6rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .hero-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgb(100 116 139 / 0.15);
+            padding: 4rem 3rem;
+            text-align: center;
+            user-select: none;
+        }
+        .hero-section h2 {
+            font-weight: 800;
+            font-size: 3rem;
+            color: #1e40af; /* strong blue */
+            letter-spacing: 0.08em;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+        }
+        .hero-section p {
+            font-weight: 500;
+            font-size: 1.125rem;
+            color: #475569; /* cool gray */
+            max-width: 640px;
+            margin: 0 auto 2.5rem auto;
+            line-height: 1.6;
+        }
+        .hero-section a.btn {
+            background-color: #1e40af;
+            color: white;
+            font-weight: 700;
+            padding: 1rem 3rem;
+            border-radius: 9999px;
+            box-shadow: 0 8px 24px rgb(30 64 175 / 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: inline-block;
+            user-select: none;
+        }
+        .hero-section a.btn:hover,
+        .hero-section a.btn:focus-visible {
+            background-color: #3b82f6; /* lighter blue */
+            transform: translateY(-3px);
+            outline-offset: 3px;
+            outline-color: #93c5fd;
+            outline-style: solid;
+            outline-width: 2px;
+            text-decoration: none;
+        }
+
+        .features-grid {
+            margin-top: 5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            user-select: none;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 16px rgb(100 116 139 / 0.1);
+            padding: 2.5rem 2rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
+            border: 1px solid transparent;
+        }
+        .feature-card:hover,
+        .feature-card:focus-visible {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgb(59 130 246 / 0.2);
+            border-color: #3b82f6;
+            outline-offset: 4px;
+            outline-color: #bfdbfe;
+            outline-style: solid;
+            outline-width: 3px;
+        }
+        .feature-card h3 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1e3a8a; /* dark blue */
+            margin-bottom: 0.75rem;
+        }
+        .feature-card p {
+            font-weight: 500;
+            font-size: 1rem;
+            color: #64748b; /* medium gray */
+            line-height: 1.5;
+        }
+
+        footer {
+            background: #1e40af;
+            padding: 2rem 1.5rem;
+            color: #e0e7ff;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            user-select: none;
+            box-shadow: 0 -3px 12px rgb(30 64 175 / 0.3);
+        }
+
+        @media (max-width: 640px) {
+            .hero-image {
+                height: 280px;
+            }
+            .hero-image-content h1 {
+                font-size: 2.25rem;
+            }
+            .hero-image-content p {
+                font-size: 1rem;
+            }
+            .hero-section h2 {
+                font-size: 2.25rem;
+            }
+            .hero-section p {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans">
-    <header class="bg-green-600 text-white py-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center px-4">
-            <h1 class="text-3xl font-bold">MatchPoint.ai</h1>
-            <nav>
-                <ul class="flex space-x-4">
-                    <li><a href="/" class="hover:underline">Home</a></li>
-                    <li><a href="/ai-platform" class="hover:underline">AI Platform</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+<body>
+<!-- Hero Image Banner -->
 
-    <main class="container mx-auto mt-8 px-4">
-        <section class="text-center py-20 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-lg shadow-lg">
-            <h2 class="text-4xl font-bold mb-4">Revolutionize Your Game with MatchPoint.ai</h2>
-            <p class="text-lg mb-6">Analyze your tennis swings, improve your performance, and achieve your goals with our AI-powered platform.</p>
-            <a href="/ai-platform" class="bg-white text-green-600 font-semibold py-2 px-6 rounded-md shadow-md hover:bg-gray-100">Get Started</a>
-        </section>
+<header>
+    <div class="container">
+        <h1>MatchPoint.ai</h1>
+        <nav>
+            <ul role="list">
+                <li><a href="/" aria-label="Home page link">Home</a></li>
+                <li><a href="/ai-platform" aria-label="AI Platform page link">AI Platform</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+<section class="hero-image" role="img" aria-label="Tennis court and player in motion with blue overlay">
+    <div class="hero-image-content">
+        <h1>Elevate Your Tennis Game</h1>
+        <p>AI-powered insights and analytics designed to unlock your true potential on the court.</p>
+        <a href="/ai-platform" class="btn" role="button" aria-label="Get Started with AI Platform">Get Started</a>
+    </div>
+</section>
 
-        <section class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                <h3 class="text-2xl font-semibold mb-4">AI-Powered Analysis</h3>
-                <p>Leverage cutting-edge AI to analyze your tennis swings and provide actionable feedback.</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                <h3 class="text-2xl font-semibold mb-4">Gamification</h3>
-                <p>Earn badges, track your progress, and stay motivated with our gamification features.</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                <h3 class="text-2xl font-semibold mb-4">Performance Insights</h3>
-                <p>Access detailed analytics to monitor your improvement and retention over time.</p>
-            </div>
-        </section>
-    </main>
+<main>
+    <section class="hero-section" role="banner" aria-label="Hero introduction section">
+        <h2>Revolutionize Your Game with MatchPoint.ai</h2>
+        <p>Analyze your tennis swings, improve your performance, and achieve your goals with our AI-powered platform.</p>
+        <a href="/ai-platform" class="btn" role="button" aria-label="Get Started with AI Platform">Get Started</a>
+    </section>
 
-    <footer class="bg-green-600 text-white py-4 mt-8">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2025 MatchPoint.ai. All rights reserved.</p>
-        </div>
-    </footer>
+    <section class="features-grid" aria-label="Key features of MatchPoint.ai">
+        <article class="feature-card" tabindex="0">
+            <h3>AI-Powered Analysis</h3>
+            <p>Leverage cutting-edge AI to analyze your tennis swings and provide actionable feedback.</p>
+        </article>
+        <article class="feature-card" tabindex="0">
+            <h3>Gamification</h3>
+            <p>Earn badges, track your progress, and stay motivated with our gamification features.</p>
+        </article>
+        <article class="feature-card" tabindex="0">
+            <h3>Performance Insights</h3>
+            <p>Access detailed analytics to monitor your improvement and retention over time.</p>
+        </article>
+    </section>
+</main>
+
+<footer>
+    <p>© 2025 MatchPoint.ai. All rights reserved.</p>
+</footer>
 </body>
 </html>
