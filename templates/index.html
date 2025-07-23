@@ -7,97 +7,437 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
     <style>
         body {
-            background: linear-gradient(to bottom, #e8f5e9, #a5d6a7);
+            font-family: 'Inter', sans-serif;
+            background: #f9fbfd;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Hero Image Banner */
+        .hero-image {
+            opacity: 0;
+            animation: fadeIn 1.2s ease forwards;
+            animation-delay: 0.2s;
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: url('https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&fit=crop&w=1350&q=80') center center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        .hero-image::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(30, 64, 175, 0.6); /* blue overlay */
+            z-index: 0;
+        }
+        .hero-image-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 700px;
+            padding: 0 1.5rem;
+        }
+        .hero-image-content h1 {
+            color: #f3f4f6; /* near white */
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.75rem;
+            text-shadow: 0 0 12px rgba(0,0,0,0.45);
+            line-height: 1.1;
+        }
+        .hero-image-content p {
+            color: #dbeafe; /* lighter blue */
+            font-weight: 600;
+            font-size: 1.25rem;
+            text-shadow: 0 0 8px rgba(0,0,0,0.3);
+            line-height: 1.5;
+            margin-bottom: 1.75rem;
+        }
+        .hero-image-content a.btn {
+            background-color: #f3f4f6;
+            color: #1e40af;
+            font-weight: 700;
+            padding: 1rem 3rem;
+            border-radius: 9999px;
+            box-shadow: 0 8px 24px rgb(243 244 246 / 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: inline-block;
+            user-select: none;
+            text-decoration: none;
+        }
+        .hero-image-content a.btn:hover,
+        .hero-image-content a.btn:focus-visible {
+            background-color: #e0e7ff;
+            transform: translateY(-3px);
+            outline-offset: 3px;
+            outline-color: #93c5fd;
+            outline-style: solid;
+            outline-width: 2px;
+            text-decoration: none;
+        }
+
+        header {
+            background: #1e40af; /* Strong blue */
+            box-shadow: 0 2px 8px rgb(30 64 175 / 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 1rem 0;
+        }
+        header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: #e0e7ff; /* light blue */
+            letter-spacing: 0.1em;
+            user-select: none;
+        }
+        nav ul {
+            display: flex;
+            gap: 2rem;
+        }
+        nav ul li a {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #c7d2fe;
+            text-decoration: none;
+            padding-bottom: 0.25rem;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.3s ease, color 0.3s ease;
+            user-select: none;
+        }
+        nav ul li a:hover,
+        nav ul li a:focus-visible {
+            color: #f3f4f6; /* near white */
+            border-bottom-color: #e0e7ff;
+            outline-offset: 4px;
+            outline-color: #93c5fd;
+            outline-style: solid;
+            outline-width: 2px;
+        }
+
+        main {
+            flex-grow: 1;
+            max-width: 960px;
+            margin: 4rem auto 6rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .hero-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgb(100 116 139 / 0.15);
+            padding: 4rem 3rem;
+            text-align: center;
+            user-select: none;
+        }
+        .hero-section h2 {
+            font-weight: 800;
+            font-size: 3rem;
+            color: #1e40af; /* strong blue */
+            letter-spacing: 0.08em;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+        }
+        .hero-section p {
+            font-weight: 500;
+            font-size: 1.125rem;
+            color: #475569; /* cool gray */
+            max-width: 640px;
+            margin: 0 auto 2.5rem auto;
+            line-height: 1.6;
+        }
+        .hero-section a.btn {
+            background-color: #1e40af;
+            color: white;
+            font-weight: 700;
+            padding: 1rem 3rem;
+            border-radius: 9999px;
+            box-shadow: 0 8px 24px rgb(30 64 175 / 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: inline-block;
+            user-select: none;
+        }
+        .hero-section a.btn:hover,
+        .hero-section a.btn:focus-visible {
+            background-color: #3b82f6; /* lighter blue */
+            transform: translateY(-3px);
+            outline-offset: 3px;
+            outline-color: #93c5fd;
+            outline-style: solid;
+            outline-width: 2px;
+            text-decoration: none;
+        }
+
+        .features-grid {
+            margin-top: 5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            user-select: none;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 16px rgb(100 116 139 / 0.1);
+            padding: 2.5rem 2rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
+            border: 1px solid transparent;
+        }
+        .feature-card:hover,
+        .feature-card:focus-visible {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgb(59 130 246 / 0.2);
+            border-color: #3b82f6;
+            outline-offset: 4px;
+            outline-color: #bfdbfe;
+            outline-style: solid;
+            outline-width: 3px;
+        }
+        .feature-card h3 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1e3a8a; /* dark blue */
+            margin-bottom: 0.75rem;
+        }
+        .feature-card p {
+            font-weight: 500;
+            font-size: 1rem;
+            color: #64748b; /* medium gray */
+            line-height: 1.5;
+        }
+
+        footer {
+            background: #1e40af;
+            padding: 2rem 1.5rem;
+            color: #e0e7ff;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            user-select: none;
+            box-shadow: 0 -3px 12px rgb(30 64 175 / 0.3);
+        }
+
+        @media (max-width: 640px) {
+            .hero-image {
+                height: 280px;
+            }
+            .hero-image-content h1 {
+                font-size: 2.25rem;
+            }
+            .hero-image-content p {
+                font-size: 1rem;
+            }
+            .hero-section h2 {
+                font-size: 2.25rem;
+            }
+            .hero-section p {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
-<body class="font-sans text-gray-800">
-<header class="bg-green-600 text-white py-4 shadow-md">
-    <div class="container mx-auto flex justify-between items-center px-4">
-        <h1 class="text-3xl font-bold">MatchPoint.ai</h1>
+<body>
+
+<header>
+    <div class="container">
+        <h1>MatchPoint.ai</h1>
         <nav>
-            <ul class="flex space-x-4">
-                <li><a href="/" class="hover:underline">Home</a></li>
-                <li><a href="/ai-platform" class="hover:underline">AI Platform</a></li>
+            <ul role="list">
+                <li><a href="/" aria-label="Home page link">Home</a></li>
+                <li><a href="/ai-platform" aria-label="AI Platform page link">AI Platform</a></li>
             </ul>
         </nav>
     </div>
 </header>
+<section class="hero-image" role="img" aria-label="Tennis court and player in motion with blue overlay" style="position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(to bottom, rgba(0, 0, 64, 0.8), rgba(0, 0, 0, 0.9)), url('/images/tennis-hero.jpg') center/cover no-repeat; color: white; text-align: center;">
+    <div class="hero-image-content" style="max-width: 800px; padding: 2rem;">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;">Elevate Your Tennis Game</h1>
+        <p style="font-size: 1.25rem; margin-bottom: 2rem;">AI-powered insights and analytics designed to unlock your true potential on the court.</p>
+        <a href="/ai-platform" class="btn" role="button" aria-label="Get Started with AI Platform" style="background-color: #00ffcc; color: black; padding: 1rem 2rem; font-size: 1rem; border-radius: 8px; text-decoration: none;">Get Started</a>
+    </div>
+    <div class="fade-down" style="position: absolute; bottom: 0; left: 0; right: 0; height: 100px; background: linear-gradient(to bottom, transparent, #000);"></div>
+</section>
+
+<section class="ai-features" style="background-color: #000; color: white; padding: 4rem 2rem; text-align: center;">
+    <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">What Our AI Can Do</h2>
+    <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; max-width: 1000px; margin: auto;">
+        <div>
+            <h3>Smart Shot Detection</h3>
+            <p>Identify patterns in your forehands, backhands, and volleys in real time.</p>
+        </div>
+        <div>
+            <h3>Performance Heatmaps</h3>
+            <p>Visualize court coverage and reaction zones for strategic improvement.</p>
+        </div>
+        <div>
+            <h3>Opponent Behavior Prediction</h3>
+            <p>Use historical match data to anticipate your opponent’s next move.</p>
+        </div>
+        <div>
+            <h3>Injury Prevention Scans</h3>
+            <p>Analyze motion risk to help prevent strain and overuse injuries.</p>
+        </div>
+    </div>
+</section>
 
 
-    <main class="container mx-auto mt-8 px-4">
-        <section class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold mb-4">Analyze Your Swing</h2>
-            <form id="upload-form" enctype="multipart/form-data" class="space-y-4">
-                <div>
-                    <label for="height" class="block text-sm font-medium">Enter your height (cm):</label>
-                    <input type="number" id="height" name="height" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                </div>
 
-                <div>
-                    <label for="stroke_type" class="block text-sm font-medium">Select stroke type:</label>
-                    <select id="stroke_type" name="stroke_type" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="Forehand">Forehand</option>
-                        <option value="Backhand">Backhand</option>
-                    </select>
-                </div>
+<main class="container mx-auto mt-12 px-6 max-w-4xl font-sans text-gray-800">
+    <section class="bg-gradient-to-r from-blue-50 to-white p-8 rounded-xl shadow-lg border border-blue-200">
+        <h2 class="text-3xl font-extrabold mb-6 text-blue-700 tracking-wide">Analyze Your Swing</h2>
+        <form id="upload-form" enctype="multipart/form-data" class="space-y-6">
+            <div>
+                <label for="height" class="block text-sm font-semibold text-blue-800 mb-2">Enter your height (cm):</label>
+                <input
+                        type="number"
+                        id="height"
+                        name="height"
+                        required
+                        class="w-full rounded-lg border border-blue-300 px-4 py-3 placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition"
+                        placeholder="e.g., 175"
+                >
+            </div>
 
-                <div>
-                    <label for="video" class="block text-sm font-medium">Upload your video:</label>
-                    <input type="file" name="video" accept="video/*" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                </div>
+            <div>
+                <label for="stroke_type" class="block text-sm font-semibold text-blue-800 mb-2">Select stroke type:</label>
+                <select
+                        id="stroke_type"
+                        name="stroke_type"
+                        required
+                        class="w-full rounded-lg border border-blue-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition"
+                >
+                    <option value="Forehand">Forehand</option>
+                    <option value="Backhand">Backhand</option>
+                </select>
+            </div>
 
-                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">Analyze Swing</button>
-            </form>
-        </section>
+            <div>
+                <label for="video" class="block text-sm font-semibold text-blue-800 mb-2">Upload your video:</label>
+                <input
+                        type="file"
+                        name="video"
+                        accept="video/*"
+                        required
+                        class="w-full rounded-lg border border-blue-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition"
+                >
+            </div>
 
-        <section id="result-section" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold mb-4">Results</h2>
-            <p id="result" class="text-lg"></p>
-            <video id="annotated_video" width="640" height="480" controls class="mt-4 hidden">
-                <source src="" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </section>
+            <button
+                    type="submit"
+                    class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 active:bg-blue-800 transition"
+            >
+                Analyze Swing
+            </button>
+        </form>
+    </section>
 
-        <section id="feedback-dashboard" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold mb-4">Feedback Dashboard</h2>
-            <div id="charts-container"></div>
-        </section>
+    <section
+            id="result-section"
+            class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200"
+    >
+        <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Results</h2>
+        <p id="result" class="text-lg leading-relaxed"></p>
+        <video
+                id="annotated_video"
+                width="640"
+                height="480"
+                controls
+                class="mt-6 hidden rounded-lg border border-blue-300 shadow-md"
+        >
+            <source src="" type="video/mp4" />
+            Your browser does not support the video tag.
+        </video>
+    </section>
 
-        <section id="player-profile" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold mb-4">Player Profile</h2>
-            <p>Name: <span id="player-name">John Doe</span></p>
-            <p>XP: <span id="player-xp">1200</span></p>
-            <p>Badges:</p>
-            <ul id="player-badges" class="list-disc pl-5">
-                <li>Beginner Badge</li>
-                <li>Consistency Badge</li>
-            </ul>
-        </section>
+    <section
+            id="feedback-dashboard"
+            class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200"
+    >
+        <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Feedback Dashboard</h2>
+        <div id="charts-container"></div>
+    </section>
 
-        <section id="performance-history" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold mb-4">Performance History</h2>
-            <table class="table-auto w-full border-collapse border border-gray-300">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="border border-gray-300 px-4 py-2">Date</th>
-                        <th class="border border-gray-300 px-4 py-2">Stroke Type</th>
-                        <th class="border border-gray-300 px-4 py-2">Feedback</th>
-                    </tr>
-                </thead>
-                <tbody id="history-table"></tbody>
-            </table>
-        </section>
+    <section
+            id="player-profile"
+            class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200"
+    >
+        <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Player Profile</h2>
+        <p class="mb-1">
+            <span class="font-semibold">Name:</span>
+            <span id="player-name" class="text-blue-600">John Doe</span>
+        </p>
+        <p class="mb-1">
+            <span class="font-semibold">XP:</span>
+            <span id="player-xp" class="text-blue-600">1200</span>
+        </p>
+        <p class="font-semibold mt-4 mb-2">Badges:</p>
+        <ul id="player-badges" class="list-disc list-inside text-blue-700 space-y-1">
+            <li>Beginner Badge</li>
+            <li>Consistency Badge</li>
+        </ul>
+    </section>
 
-        <section id="analytics-dashboard" class="hidden mt-8 bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold mb-4">Analytics Dashboard</h2>
-            <canvas id="retention-chart" class="mb-4"></canvas>
-            <canvas id="improvement-chart"></canvas>
-        </section>
-    </main>
+    <section
+            id="performance-history"
+            class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200 overflow-x-auto"
+    >
+        <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Performance History</h2>
+        <table class="min-w-full table-auto border-collapse border border-blue-300 text-left">
+            <thead class="bg-blue-50">
+            <tr>
+                <th class="border border-blue-300 px-6 py-3 font-semibold text-blue-800">Date</th>
+                <th class="border border-blue-300 px-6 py-3 font-semibold text-blue-800">Stroke Type</th>
+                <th class="border border-blue-300 px-6 py-3 font-semibold text-blue-800">Feedback</th>
+            </tr>
+            </thead>
+            <tbody id="history-table" class="divide-y divide-blue-100"></tbody>
+        </table>
+    </section>
+
+    <section
+            id="analytics-dashboard"
+            class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200"
+    >
+        <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Analytics Dashboard</h2>
+        <canvas id="retention-chart" class="mb-6 rounded-lg shadow-sm border border-blue-300"></canvas>
+        <canvas id="improvement-chart" class="rounded-lg shadow-sm border border-blue-300"></canvas>
+    </section>
+</main>
+
 
     <footer class="bg-green-600 text-white py-4 mt-8">
         <div class="container mx-auto text-center">
