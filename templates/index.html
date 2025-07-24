@@ -287,21 +287,17 @@
     <div class="hero-image-content" style="max-width: 800px; padding: 2rem;">
         <h1 style="font-size: 3rem; margin-bottom: 1rem;">Elevate Your Tennis Game</h1>
         <p style="font-size: 1.25rem; margin-bottom: 2rem;">AI-powered insights and analytics designed to unlock your true potential on the court.</p>
-        <a href="/ai-platform" class="btn" role="button" aria-label="Get Started with AI Platform" style="background-color: #00ffcc; color: black; padding: 1rem 2rem; font-size: 1rem; border-radius: 8px; text-decoration: none;">Get Started</a>
+        <a href="/ai-platform" class="btn" role="button" aria-label="Get Started with AI Platform" style="background-color: #0073ff; color: black; padding: 1rem 2rem; font-size: 1rem; border-radius: 8px; text-decoration: none;">Get Started</a>
     </div>
     <div class="fade-down" style="position: absolute; bottom: 0; left: 0; right: 0; height: 100px; background: linear-gradient(to bottom, transparent, #000);"></div>
 </section>
 
 <section class="ai-features" style="background-color: #000; color: white; padding: 4rem 2rem; text-align: center;">
-    <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">What Our AI Can Do</h2>
+    <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">What Our Algorithm Can Do</h2>
     <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; max-width: 1000px; margin: auto;">
         <div>
             <h3>Smart Shot Detection</h3>
             <p>Identify patterns in your forehands, backhands, and volleys in real time.</p>
-        </div>
-        <div>
-            <h3>Performance Heatmaps</h3>
-            <p>Visualize court coverage and reaction zones for strategic improvement.</p>
         </div>
         <div>
             <h3>Opponent Behavior Prediction</h3>
@@ -436,6 +432,30 @@
         <canvas id="retention-chart" class="mb-6 rounded-lg shadow-sm border border-blue-300"></canvas>
         <canvas id="improvement-chart" class="rounded-lg shadow-sm border border-blue-300"></canvas>
     </section>
+
+    <section
+            id="analysis-graphs"
+            class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200"
+    >
+        <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Advanced Analysis</h2>
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-xl font-bold mb-3 text-blue-600">Joint Angles Over Time</h3>
+                <img id="joint-angles-graph" src="" alt="Joint Angles Graph" class="w-full rounded-lg shadow-md border border-blue-300">
+                <p class="text-sm text-gray-600 mt-2">This graph shows how your joint angles change throughout your swing. Understanding joint angles can help you improve your form and reduce the risk of injury by identifying improper movements.</p>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold mb-3 text-blue-600">Average Angles</h3>
+                <img id="average-angles-graph" src="/static/average_angles.png" alt="Average Angles Graph" class="w-full rounded-lg shadow-md border border-blue-300">
+                <p class="text-sm text-gray-600 mt-2">This bar graph displays the average elbow angle, knee angle, and racket angle during your swing. It provides a quick overview of your form and highlights areas for improvement.</p>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold mb-3 text-blue-600">Racket Trajectory</h3>
+                <img id="trajectory-graph" src="" alt="Trajectory Graph" class="w-full rounded-lg shadow-md border border-blue-300">
+                <p class="text-sm text-gray-600 mt-2">This graph illustrates the path of the racket as represented by the motion of the blue dot in the skeleton visualization. It provides a detailed view of the racket's movement, helping you refine your swing for better accuracy and control.</p>
+            </div>
+        </div>
+    </section>
 </main>
 
 
@@ -466,6 +486,19 @@
                 resultText.textContent = "Coach's Feedback: " + data.feedback;
                 video.src = data.video_path;
                 video.classList.remove('hidden');
+
+                // Ensure analytics graphs are optional and do not block video display
+                if (data.graphs) {
+                    const analysisGraphs = document.getElementById('analysis-graphs');
+                    const jointAnglesGraph = document.getElementById('joint-angles-graph');
+                    const averageAnglesGraph = document.getElementById('average-angles-graph');
+                    const trajectoryGraph = document.getElementById('trajectory-graph');
+
+                    jointAnglesGraph.src = data.graphs.joint_angles;
+                    averageAnglesGraph.src = data.graphs.average_angles;
+                    trajectoryGraph.src = data.graphs.trajectory;
+                    analysisGraphs.classList.remove('hidden');
+                }
             }
         };
     </script>

@@ -8,6 +8,8 @@ import logging  # Import logging
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -280,6 +282,55 @@ def classify_stroke(video_path):
     logging.warning("Stroke classification is temporarily disabled.")
     return "Stroke classification disabled"
 
+def generate_graphs(elbow_angles, knee_angles, racket_positions, output_folder):
+    """Generates graphs for advanced analysis."""
+    graphs = {}
+
+    # Plot elbow and knee angles over time
+    plt.figure(figsize=(10, 6))
+    plt.plot(elbow_angles, label='Elbow Angles', color='blue')
+    plt.plot(knee_angles, label='Knee Angles', color='green')
+    plt.xlabel('Frame')
+    plt.ylabel('Angle (degrees)')
+    plt.title('Joint Angles Over Time')
+    plt.legend()
+    joint_angles_path = os.path.join(output_folder, 'joint_angles.png')
+    plt.savefig(joint_angles_path)
+    plt.close()
+    graphs['joint_angles'] = joint_angles_path
+
+    # Bar graph for average angles
+    avg_elbow_angle = np.mean(elbow_angles) if elbow_angles else 0
+    avg_knee_angle = np.mean(knee_angles) if knee_angles else 0
+    avg_racket_angle = calculate_angle(np.array([0, 0]), np.array([1, 1]), np.array([2, 2]))  # Mock example
+
+    plt.figure(figsize=(8, 6))
+    categories = ['Elbow Angle', 'Knee Angle', 'Racket Angle']
+    values = [avg_elbow_angle, avg_knee_angle, avg_racket_angle]
+    plt.bar(categories, values, color=['blue', 'green', 'red'])
+    plt.xlabel('Category')
+    plt.ylabel('Average Angle (degrees)')
+    plt.title('Average Angles')
+    bar_graph_path = os.path.join(output_folder, 'average_angles.png')
+    plt.savefig(bar_graph_path)
+    plt.close()
+    graphs['average_angles'] = bar_graph_path
+
+    # Trajectory of racket positions
+    if racket_positions:
+        racket_positions = np.array(racket_positions)
+        plt.figure(figsize=(10, 6))
+        plt.plot(racket_positions[:, 0], racket_positions[:, 1], marker='o', linestyle='-', color='red')
+        plt.xlabel('X Position')
+        plt.ylabel('Y Position')
+        plt.title('Racket Trajectory')
+        trajectory_path = os.path.join(output_folder, 'trajectory.png')
+        plt.savefig(trajectory_path)
+        plt.close()
+        graphs['trajectory'] = trajectory_path
+
+    return graphs
+
 @app.route('/')
 def landing():
     return render_template('landing.html')
@@ -298,8 +349,19 @@ def analyze():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
     file.save(file_path)
     feedback, video_path = analyze_swing(file_path, height, stroke_type)
+
+    # Generate advanced analysis graphs
+    elbow_angles = [90, 85, 80]  # Replace with actual data
+    knee_angles = [160, 155, 150]  # Replace with actual data
+    racket_positions = [[10, 20], [15, 25], [20, 30]]  # Replace with actual data
+    graphs = generate_graphs(elbow_angles, knee_angles, racket_positions, app.config['OUTPUT_FOLDER'])
+
     os.remove(file_path)  # Clean up uploaded file
-    return jsonify({'feedback': feedback, 'video_path': video_path})
+    return jsonify({
+        'feedback': feedback,
+        'video_path': video_path,
+        'graphs': graphs
+    })
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
