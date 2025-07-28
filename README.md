@@ -25,13 +25,13 @@ MatchPoint.ai is an AI-powered platform designed to revolutionize the way tennis
    ```
 4. Start the Flask application:
    ```bash
-   python app.py
+   python application.py
    ```
 5. Open your browser and navigate to `http://127.0.0.1:5000` to access the landing page.
 
 ## Project Structure
 
-- `app.py`: Core backend logic, including routes and AI model integration.
+- `application.py`: Core backend logic, including routes and AI model integration.
 - `templates/`: HTML templates for the landing page and AI platform.
 - `static/`: Static files such as CSS and JavaScript.
 - `uploads/`: Directory for uploaded video files.

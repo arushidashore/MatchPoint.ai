@@ -241,14 +241,17 @@
         }
 
         footer {
-            background: #1e40af;
+            background: #1e40af; /* Strong blue matching landing.html */
             padding: 2rem 1.5rem;
-            color: #e0e7ff;
+            color: #e0e7ff; /* Light blue */
             text-align: center;
             font-weight: 600;
             letter-spacing: 0.1em;
             user-select: none;
             box-shadow: 0 -3px 12px rgb(30 64 175 / 0.3);
+            position: static;
+            bottom: 0;
+            width: 100%;
         }
 
         @media (max-width: 640px) {
@@ -279,6 +282,7 @@
             <ul role="list">
                 <li><a href="/" aria-label="Home page link">Home</a></li>
                 <li><a href="/ai-platform" aria-label="AI Platform page link">AI Platform</a></li>
+                <li><a href="/team" aria-label="Team page link">Team</a></li>
             </ul>
         </nav>
     </div>
@@ -459,7 +463,7 @@
 </main>
 
 
-    <footer class="bg-green-600 text-white py-4 mt-8">
+    <footer class="bg-blue-600 text-white py-4 mt-8">
         <div class="container mx-auto text-center">
             <p>&copy; 2025 MatchPoint.ai. All rights reserved.</p>
         </div>
