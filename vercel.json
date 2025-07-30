@@ -14,9 +14,5 @@
   ],
   "env": {
     "PYTHON_VERSION": "3.9.5"
-  },
-  "commands": [
-    "pip install -r requirements.txt",
-    "python app.py"
-  ]
+  }
 }
