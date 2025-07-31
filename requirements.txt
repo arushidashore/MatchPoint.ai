@@ -57,7 +57,6 @@ six==1.17.0
 SQLAlchemy==2.0.42
 tensorflow==2.19.0
 tensorflow-hub==0.16.1
-tensorflow-io-gcs-filesystem==0.31.0
 termcolor==3.1.0
 tf_keras==2.19.0
 
