@@ -56,7 +56,6 @@ seaborn==0.13.2
 six==1.17.0
 SQLAlchemy==2.0.42
 tensorflow==2.19.0
-tensorflow-data-server==0.7.2
 tensorflow-hub==0.16.1
 tensorflow-io-gcs-filesystem==0.31.0
 termcolor==3.1.0
