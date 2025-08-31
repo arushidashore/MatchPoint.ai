@@ -1,0 +1,25 @@
+name: matchpoint-ai
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: arushidashore/MatchPoint.ai
+    branch: main
+  run_command: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 app:app
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 5000
+  routes:
+  - path: /
+  envs:
+  - key: SECRET_KEY
+    value: your-super-secret-key-change-this-in-production
+  - key: JWT_SECRET_KEY
+    value: your-jwt-secret-key-change-this-in-production
+  - key: FLASK_ENV
+    value: production
+  - key: DATABASE_URL
+    value: sqlite:///matchpoint.db
+  - key: MAX_CONTENT_LENGTH
+    value: "52428800"  # 50MB in bytes
