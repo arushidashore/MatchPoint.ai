@@ -5,7 +5,7 @@ services:
   github:
     repo: arushidashore/MatchPoint.ai
     branch: main
-  run_command: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 app:app
+  run_command: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 app_minimal:app
   environment_slug: python
   instance_count: 1
   instance_size_slug: basic-xxs
