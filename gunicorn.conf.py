@@ -9,3 +9,6 @@ max_requests = int(os.environ.get('MAX_REQUESTS', 1000))
 max_requests_jitter = 50
 preload_app = True
 keepalive = 5
+
+# Application module and variable
+pythonpath = os.path.dirname(__file__)
