@@ -118,9 +118,9 @@ def analyze_swing_with_progress(job_id, video_path, height, stroke_type, progres
         
         progress_queue.put({'status': 'progress', 'progress': 20, 'message': f'Video loaded: {total_frames} frames'})
         
-        # Optimization settings for longer videos (up to 3 minutes)
-        frame_skip = 8  # Process every 8th frame for longer videos
-        max_frames = 25  # Increased to 25 frames for better analysis
+        # Balanced settings for longer videos (up to 3 minutes)
+        frame_skip = 4  # Process every 4th frame for better pose detection
+        max_frames = 50  # Increased to 50 frames for comprehensive analysis
         processed_frames = 0
         
         # Create temporary output file
@@ -130,7 +130,7 @@ def analyze_swing_with_progress(job_id, video_path, height, stroke_type, progres
         
         try:
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(temp_output_path, fourcc, fps//frame_skip, (480, 360))
+            out = cv2.VideoWriter(temp_output_path, fourcc, fps//frame_skip, (640, 480))
         except Exception as e:
             progress_queue.put({'status': 'error', 'message': 'Error creating video output'})
             cap.release()
@@ -163,8 +163,8 @@ def analyze_swing_with_progress(job_id, video_path, height, stroke_type, progres
                 'message': f'Processing frame {processed_frames}/{max_frames}'
             })
             
-            # Resize frame for faster processing
-            frame = cv2.resize(frame, (480, 360))
+            # Resize frame for balanced processing
+            frame = cv2.resize(frame, (640, 480))
             
             try:
                 annotated_frame, keypoints = detect_pose_with_progress(frame, model)
@@ -173,7 +173,7 @@ def analyze_swing_with_progress(job_id, video_path, height, stroke_type, progres
                 # Calculate angles if keypoints are detected
                 if np.any(keypoints) and not np.all(keypoints == 0):
                     # Elbow angle
-                    if all(k[2] > 0.2 for k in [keypoints[6], keypoints[8], keypoints[10]]):
+                    if all(k[2] > 0.3 for k in [keypoints[6], keypoints[8], keypoints[10]]):
                         shoulder = keypoints[6][:2]
                         elbow = keypoints[8][:2]
                         wrist = keypoints[10][:2]
@@ -181,7 +181,7 @@ def analyze_swing_with_progress(job_id, video_path, height, stroke_type, progres
                         elbow_angles.append(elbow_angle)
 
                     # Knee angle
-                    if all(k[2] > 0.2 for k in [keypoints[12], keypoints[14], keypoints[16]]):
+                    if all(k[2] > 0.3 for k in [keypoints[12], keypoints[14], keypoints[16]]):
                         hip = keypoints[12][:2]
                         knee = keypoints[14][:2]
                         ankle = keypoints[16][:2]
@@ -189,7 +189,7 @@ def analyze_swing_with_progress(job_id, video_path, height, stroke_type, progres
                         knee_angles.append(knee_angle)
 
                     # Racket position
-                    if keypoints[10][2] > 0.2:
+                    if keypoints[10][2] > 0.3:
                         racket_positions.append(keypoints[10][:2])
             except Exception as e:
                 logging.error(f"Error processing frame {frame_count}: {e}")
@@ -232,12 +232,23 @@ def detect_pose_with_progress(frame, model):
         outputs = model(img)
         keypoints = outputs['output_0'].numpy().squeeze()
         
-        # Draw skeleton
+        # Draw skeleton for better visualization
         y, x, _ = frame.shape
         for keypoint in keypoints:
             ky, kx, kp_conf = keypoint
-            if kp_conf > 0.2:
-                cv2.circle(frame, (int(kx * x), int(ky * y)), 2, (0, 0, 255), -1)
+            if kp_conf > 0.3:
+                cv2.circle(frame, (int(kx * x), int(ky * y)), 3, (0, 0, 255), -1)
+        
+        # Draw connections between keypoints
+        connections = [(0, 1), (0, 2), (1, 3), (2, 4), (5, 6), (5, 7), (6, 8), (7, 9), (8, 10), (11, 12), (11, 13), (12, 14), (13, 15), (14, 16)]
+        for connection in connections:
+            start_point = keypoints[connection[0]]
+            end_point = keypoints[connection[1]]
+            if start_point[2] > 0.3 and end_point[2] > 0.3:
+                cv2.line(frame,
+                         (int(start_point[1] * x), int(start_point[0] * y)),
+                         (int(end_point[1] * x), int(end_point[0] * y)),
+                         (0, 255, 0), 2)
         
         return frame, keypoints
     except Exception as e:

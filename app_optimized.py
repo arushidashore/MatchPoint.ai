@@ -173,14 +173,12 @@ def analyze_swing_ultra_fast(video_path, height, stroke_type):
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
-    # Optimized settings for longer videos (up to 3 minutes)
-    frame_skip = 12  # Process every 12th frame for longer videos
-    max_frames = 30  # Increased to 30 frames for better analysis
+    # Balanced settings for longer videos (up to 3 minutes)
+    frame_skip = 4  # Process every 4th frame for better pose detection
+    max_frames = 50  # Increased to 50 frames for comprehensive analysis
     processed_frames = 0
     
-    # Calculate optimal frame selection (focus on middle portion of video)
-    start_frame = max(0, total_frames // 4)
-    end_frame = min(total_frames, start_frame + (max_frames * frame_skip))
+    # Process frames from the beginning for better pose detection
     
     # Create temporary output file
     temp_output = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
@@ -189,7 +187,7 @@ def analyze_swing_ultra_fast(video_path, height, stroke_type):
     
     try:
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(temp_output_path, fourcc, fps//frame_skip, (320, 240))  # Smaller output
+        out = cv2.VideoWriter(temp_output_path, fourcc, fps//frame_skip, (640, 480))  # Better resolution for pose detection
     except Exception as e:
         logging.error(f"Error creating VideoWriter: {e}")
         cap.release()
@@ -200,23 +198,20 @@ def analyze_swing_ultra_fast(video_path, height, stroke_type):
     racket_positions = []
     processed_frames_list = []
     
-    # Jump to start frame
-    cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-    frame_count = start_frame
-    
-    while frame_count < end_frame and processed_frames < max_frames:
+    frame_count = 0
+    while processed_frames < max_frames:
         ret, frame = cap.read()
         if not ret:
             break
             
         frame_count += 1
-        if (frame_count - start_frame) % frame_skip != 0:
+        if frame_count % frame_skip != 0:
             continue
             
         processed_frames += 1
         
-        # Aggressive frame resizing for speed
-        frame = cv2.resize(frame, (320, 240))
+        # Balanced frame resizing for pose detection accuracy
+        frame = cv2.resize(frame, (640, 480))
         
         try:
             annotated_frame, keypoints = detect_pose_ultra_fast(frame, model)
@@ -224,16 +219,16 @@ def analyze_swing_ultra_fast(video_path, height, stroke_type):
 
             # Calculate angles if keypoints are detected
             if np.any(keypoints) and not np.all(keypoints == 0):
-                # Elbow angle (simplified)
-                if all(k[2] > 0.2 for k in [keypoints[6], keypoints[8], keypoints[10]]):
+                # Elbow angle (balanced threshold)
+                if all(k[2] > 0.3 for k in [keypoints[6], keypoints[8], keypoints[10]]):
                     shoulder = keypoints[6][:2]
                     elbow = keypoints[8][:2]
                     wrist = keypoints[10][:2]
                     elbow_angle = calculate_angle_fast(shoulder, elbow, wrist)
                     elbow_angles.append(elbow_angle)
 
-                # Knee angle (simplified)
-                if all(k[2] > 0.2 for k in [keypoints[12], keypoints[14], keypoints[16]]):
+                # Knee angle (balanced threshold)
+                if all(k[2] > 0.3 for k in [keypoints[12], keypoints[14], keypoints[16]]):
                     hip = keypoints[12][:2]
                     knee = keypoints[14][:2]
                     ankle = keypoints[16][:2]
@@ -241,7 +236,7 @@ def analyze_swing_ultra_fast(video_path, height, stroke_type):
                     knee_angles.append(knee_angle)
 
                 # Racket position
-                if keypoints[10][2] > 0.2:
+                if keypoints[10][2] > 0.3:
                     racket_positions.append(keypoints[10][:2])
         except Exception as e:
             logging.error(f"Error processing frame {frame_count}: {e}")
@@ -276,12 +271,23 @@ def detect_pose_ultra_fast(frame, model):
         outputs = model(img)
         keypoints = outputs['output_0'].numpy().squeeze()
         
-        # Minimal drawing for speed
+        # Draw skeleton for better visualization
         y, x, _ = frame.shape
         for keypoint in keypoints:
             ky, kx, kp_conf = keypoint
-            if kp_conf > 0.2:  # Lower confidence threshold
-                cv2.circle(frame, (int(kx * x), int(ky * y)), 1, (0, 0, 255), -1)
+            if kp_conf > 0.3:  # Balanced confidence threshold
+                cv2.circle(frame, (int(kx * x), int(ky * y)), 3, (0, 0, 255), -1)
+        
+        # Draw connections between keypoints
+        connections = [(0, 1), (0, 2), (1, 3), (2, 4), (5, 6), (5, 7), (6, 8), (7, 9), (8, 10), (11, 12), (11, 13), (12, 14), (13, 15), (14, 16)]
+        for connection in connections:
+            start_point = keypoints[connection[0]]
+            end_point = keypoints[connection[1]]
+            if start_point[2] > 0.3 and end_point[2] > 0.3:
+                cv2.line(frame,
+                         (int(start_point[1] * x), int(start_point[0] * y)),
+                         (int(end_point[1] * x), int(end_point[0] * y)),
+                         (0, 255, 0), 2)
         
         return frame, keypoints
     except Exception as e:
