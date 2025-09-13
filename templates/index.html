@@ -470,41 +470,204 @@
     </footer>
 
     <script>
+        // Video compression and optimization
+        async function compressVideo(file) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const video = document.createElement('video');
+                
+                video.onloadedmetadata = () => {
+                    // Set canvas size to max 640x480 for faster processing
+                    const maxWidth = 640;
+                    const maxHeight = 480;
+                    const aspectRatio = video.videoWidth / video.videoHeight;
+                    
+                    if (video.videoWidth > maxWidth) {
+                        canvas.width = maxWidth;
+                        canvas.height = maxWidth / aspectRatio;
+                    } else {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                    }
+                    
+                    // Limit duration to 3 minutes max
+                    const maxDuration = Math.min(180, video.duration);
+                    video.currentTime = 0;
+                    
+                    const chunks = [];
+                    let chunkIndex = 0;
+                    const chunkDuration = 1; // Process in 1-second chunks
+                    
+                    function processChunk() {
+                        if (chunkIndex * chunkDuration >= maxDuration) {
+                            // Create compressed video
+                            const blob = new Blob(chunks, { type: 'video/webm' });
+                            resolve(blob);
+                            return;
+                        }
+                        
+                        video.currentTime = chunkIndex * chunkDuration;
+                        video.onseeked = () => {
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            canvas.toBlob((chunk) => {
+                                chunks.push(chunk);
+                                chunkIndex++;
+                                setTimeout(processChunk, 10);
+                            }, 'image/webp', 0.8);
+                        };
+                    }
+                    
+                    video.onloadeddata = processChunk;
+                };
+                
+                video.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Enhanced upload with progress tracking
         document.getElementById('upload-form').onsubmit = async function(e) {
             e.preventDefault();
+            
             const formData = new FormData(this);
             const resultSection = document.getElementById('result-section');
             const resultText = document.getElementById('result');
             const video = document.getElementById('annotated_video');
-
+            const progressContainer = document.getElementById('progress-container');
+            
+            // Show progress container
+            if (!progressContainer) {
+                const progressDiv = document.createElement('div');
+                progressDiv.id = 'progress-container';
+                progressDiv.className = 'mt-4 bg-blue-50 p-4 rounded-lg';
+                progressDiv.innerHTML = `
+                    <div class="text-sm font-medium text-blue-800 mb-2">Processing Progress</div>
+                    <div class="w-full bg-blue-200 rounded-full h-2.5">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="progress-text" class="text-sm text-blue-600 mt-2">Preparing video...</div>
+                `;
+                resultSection.insertBefore(progressDiv, resultSection.firstChild);
+            }
+            
             resultSection.classList.remove('hidden');
-            resultText.textContent = "Analyzing...";
+            resultText.textContent = "Processing...";
             video.classList.add('hidden');
-
-            const res = await fetch('/analyze', { method: 'POST', body: formData });
-            const data = await res.json();
-
-            if (data.error) {
-                resultText.textContent = "Error: " + data.error;
-            } else {
-                resultText.textContent = "Coach's Feedback: " + data.feedback;
-                video.src = data.video_path;
-                video.classList.remove('hidden');
-
-                // Ensure analytics graphs are optional and do not block video display
-                if (data.graphs) {
-                    const analysisGraphs = document.getElementById('analysis-graphs');
-                    const jointAnglesGraph = document.getElementById('joint-angles-graph');
-                    const averageAnglesGraph = document.getElementById('average-angles-graph');
-                    const trajectoryGraph = document.getElementById('trajectory-graph');
-
-                    jointAnglesGraph.src = data.graphs.joint_angles;
-                    averageAnglesGraph.src = data.graphs.average_angles;
-                    trajectoryGraph.src = data.graphs.trajectory;
-                    analysisGraphs.classList.remove('hidden');
+            
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            try {
+                // Step 1: Validate and compress video
+                progressText.textContent = 'Validating video...';
+                progressBar.style.width = '10%';
+                
+                const videoFile = formData.get('video');
+                if (videoFile.size > 100 * 1024 * 1024) { // 100MB limit for 3-minute videos
+                    throw new Error('Video file too large. Please use a video smaller than 100MB.');
                 }
+                
+                // Step 2: Compress video
+                progressText.textContent = 'Compressing video for faster processing...';
+                progressBar.style.width = '30%';
+                
+                const compressedVideo = await compressVideo(videoFile);
+                formData.set('video', compressedVideo, 'compressed_video.webm');
+                
+                // Step 3: Upload with progress tracking
+                progressText.textContent = 'Uploading video...';
+                progressBar.style.width = '50%';
+                
+                const xhr = new XMLHttpRequest();
+                
+                // Track upload progress
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = 50 + (e.loaded / e.total) * 30; // 50-80%
+                        progressBar.style.width = percentComplete + '%';
+                        progressText.textContent = `Uploading... ${Math.round(percentComplete)}%`;
+                    }
+                });
+                
+                // Step 4: Process analysis
+                progressText.textContent = 'Analyzing swing...';
+                progressBar.style.width = '80%';
+                
+                const res = await fetch('/analyze', { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Analysis complete!';
+                
+                const data = await res.json();
+
+                if (data.error) {
+                    resultText.textContent = "Error: " + data.error;
+                    progressText.textContent = 'Analysis failed';
+                } else {
+                    resultText.textContent = "Coach's Feedback: " + data.feedback;
+                    video.src = data.video_path;
+                    video.classList.remove('hidden');
+                    progressText.textContent = 'Analysis successful!';
+
+                    // Show analytics graphs if available
+                    if (data.graphs) {
+                        const analysisGraphs = document.getElementById('analysis-graphs');
+                        const jointAnglesGraph = document.getElementById('joint-angles-graph');
+                        const averageAnglesGraph = document.getElementById('average-angles-graph');
+                        const trajectoryGraph = document.getElementById('trajectory-graph');
+
+                        jointAnglesGraph.src = data.graphs.joint_angles;
+                        averageAnglesGraph.src = data.graphs.average_angles;
+                        trajectoryGraph.src = data.graphs.trajectory;
+                        analysisGraphs.classList.remove('hidden');
+                    }
+                }
+                
+                // Hide progress after 3 seconds
+                setTimeout(() => {
+                    const progressContainer = document.getElementById('progress-container');
+                    if (progressContainer) {
+                        progressContainer.remove();
+                    }
+                }, 3000);
+                
+            } catch (error) {
+                resultText.textContent = "Error: " + error.message;
+                progressText.textContent = 'Processing failed';
+                progressBar.style.background = '#ef4444'; // Red for error
             }
         };
+        
+        // Real-time file validation
+        document.querySelector('input[name="video"]').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileSizeMB = file.size / (1024 * 1024);
+            const maxSizeMB = 100;
+            
+            if (fileSizeMB > maxSizeMB) {
+                alert(`File too large! Please select a video smaller than ${maxSizeMB}MB. Current size: ${fileSizeMB.toFixed(1)}MB`);
+                e.target.value = '';
+                return;
+            }
+            
+            // Show file info
+            const fileInfo = document.getElementById('file-info');
+            if (!fileInfo) {
+                const infoDiv = document.createElement('div');
+                infoDiv.id = 'file-info';
+                infoDiv.className = 'mt-2 text-sm text-gray-600';
+                e.target.parentNode.appendChild(infoDiv);
+            }
+            
+            document.getElementById('file-info').textContent = 
+                `Selected: ${file.name} (${fileSizeMB.toFixed(1)}MB)`;
+        });
     </script>
 </body>
 </html>

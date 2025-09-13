@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MatchPoint.ai - Streaming Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f9fbfd;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dasharray 0.3s ease;
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: loading-dots 1.5s infinite;
+        }
+
+        @keyframes loading-dots {
+            0%, 20% {
+                content: '';
+            }
+            40% {
+                content: '.';
+            }
+            60% {
+                content: '..';
+            }
+            80%, 100% {
+                content: '...';
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-blue-600 shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-white">MatchPoint.ai</h1>
+                <nav class="space-x-6">
+                    <a href="/" class="text-blue-100 hover:text-white transition">Home</a>
+                    <a href="/ai-platform" class="text-blue-100 hover:text-white transition">AI Platform</a>
+                    <a href="/team" class="text-blue-100 hover:text-white transition">Team</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto mt-12 px-6 max-w-4xl font-sans text-gray-800">
+        <section class="bg-gradient-to-r from-blue-50 to-white p-8 rounded-xl shadow-lg border border-blue-200">
+            <h2 class="text-3xl font-extrabold mb-6 text-blue-700 tracking-wide">Analyze Your Swing</h2>
+            <form id="upload-form" enctype="multipart/form-data" class="space-y-6">
+                <div>
+                    <label for="height" class="block text-sm font-semibold text-blue-800 mb-2">Enter your height (cm):</label>
+                    <input
+                            type="number"
+                            id="height"
+                            name="height"
+                            required
+                            class="w-full rounded-lg border border-blue-300 px-4 py-3 placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition"
+                            placeholder="e.g., 175"
+                    >
+                </div>
+
+                <div>
+                    <label for="stroke_type" class="block text-sm font-semibold text-blue-800 mb-2">Select stroke type:</label>
+                    <select
+                            id="stroke_type"
+                            name="stroke_type"
+                            required
+                            class="w-full rounded-lg border border-blue-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition"
+                    >
+                        <option value="Forehand">Forehand</option>
+                        <option value="Backhand">Backhand</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="video" class="block text-sm font-semibold text-blue-800 mb-2">Upload your video:</label>
+                    <input
+                            type="file"
+                            name="video"
+                            accept="video/*"
+                            required
+                            class="w-full rounded-lg border border-blue-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition"
+                    >
+                    <div id="file-info" class="mt-2 text-sm text-gray-600"></div>
+                </div>
+
+                <button
+                        type="submit"
+                        id="submit-btn"
+                        class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 active:bg-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span id="submit-text">Analyze Swing</span>
+                    <span id="submit-loading" class="hidden">Processing...</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- Progress Section -->
+        <section id="progress-section" class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200">
+            <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Processing Progress</h2>
+            
+            <div class="flex items-center justify-center mb-6">
+                <div class="relative">
+                    <svg class="progress-ring w-32 h-32" width="128" height="128">
+                        <circle
+                            class="progress-ring-circle stroke-blue-200"
+                            stroke-width="8"
+                            fill="transparent"
+                            r="56"
+                            cx="64"
+                            cy="64"
+                        />
+                        <circle
+                            id="progress-circle"
+                            class="progress-ring-circle stroke-blue-600"
+                            stroke-width="8"
+                            fill="transparent"
+                            r="56"
+                            cx="64"
+                            cy="64"
+                            stroke-dasharray="351.86"
+                            stroke-dashoffset="351.86"
+                        />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span id="progress-percentage" class="text-2xl font-bold text-blue-600">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <p id="progress-message" class="text-lg text-gray-700 mb-4">Preparing analysis...</p>
+                <div id="progress-details" class="text-sm text-gray-500">
+                    <div id="processing-time" class="mb-2"></div>
+                    <div id="job-id" class="font-mono text-xs bg-gray-100 px-2 py-1 rounded"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="result-section" class="hidden mt-10 bg-white p-8 rounded-xl shadow-lg border border-blue-200">
+            <h2 class="text-3xl font-extrabold mb-5 text-blue-700 tracking-wide">Analysis Results</h2>
+            <div id="result-content">
+                <p id="result" class="text-lg leading-relaxed mb-6"></p>
+                <video
+                        id="annotated_video"
+                        width="640"
+                        height="480"
+                        controls
+                        class="hidden rounded-lg border border-blue-300 shadow-md"
+                >
+                    <source src="" type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-blue-600 text-white py-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 MatchPoint.ai. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let currentJobId = null;
+        let progressInterval = null;
+        let startTime = null;
+
+        // File validation
+        document.querySelector('input[name="video"]').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileSizeMB = file.size / (1024 * 1024);
+            const maxSizeMB = 100;
+            
+            if (fileSizeMB > maxSizeMB) {
+                alert(`File too large! Please select a video smaller than ${maxSizeMB}MB. Current size: ${fileSizeMB.toFixed(1)}MB`);
+                e.target.value = '';
+                return;
+            }
+            
+            document.getElementById('file-info').textContent = 
+                `Selected: ${file.name} (${fileSizeMB.toFixed(1)}MB)`;
+        });
+
+        // Form submission with streaming progress
+        document.getElementById('upload-form').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const submitLoading = document.getElementById('submit-loading');
+            const progressSection = document.getElementById('progress-section');
+            const resultSection = document.getElementById('result-section');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            
+            // Hide previous results
+            resultSection.classList.add('hidden');
+            progressSection.classList.remove('hidden');
+            
+            // Reset progress
+            updateProgress(0, 'Starting analysis...');
+            
+            try {
+                // Start analysis
+                const response = await fetch('/analyze', { 
+                    method: 'POST', 
+                    body: formData 
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                currentJobId = data.job_id;
+                startTime = Date.now();
+                document.getElementById('job-id').textContent = `Job ID: ${currentJobId}`;
+                
+                // Start progress polling
+                startProgressPolling();
+                
+            } catch (error) {
+                showError(error.message);
+                resetForm();
+            }
+        };
+
+        function startProgressPolling() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+            }
+            
+            progressInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/progress/${currentJobId}`);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    updateProgress(data.progress, data.message);
+                    
+                    if (data.status === 'complete') {
+                        clearInterval(progressInterval);
+                        showResults(data);
+                    } else if (data.status === 'error') {
+                        clearInterval(progressInterval);
+                        showError(data.message);
+                    }
+                    
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    showError('Failed to get progress updates: ' + error.message);
+                }
+            }, 500); // Poll every 500ms
+        }
+
+        function updateProgress(percentage, message) {
+            const progressCircle = document.getElementById('progress-circle');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressMessage = document.getElementById('progress-message');
+            const processingTime = document.getElementById('processing-time');
+            
+            // Update progress circle
+            const circumference = 2 * Math.PI * 56;
+            const offset = circumference - (percentage / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+            
+            // Update text
+            progressPercentage.textContent = `${percentage}%`;
+            progressMessage.textContent = message;
+            
+            // Update processing time
+            if (startTime) {
+                const elapsed = Math.round((Date.now() - startTime) / 1000);
+                processingTime.textContent = `Processing time: ${elapsed}s`;
+            }
+        }
+
+        function showResults(data) {
+            const resultSection = document.getElementById('result-section');
+            const resultText = document.getElementById('result');
+            const video = document.getElementById('annotated_video');
+            
+            resultSection.classList.remove('hidden');
+            resultText.textContent = "Coach's Feedback: " + data.feedback;
+            
+            if (data.video_path) {
+                video.src = data.video_path;
+                video.classList.remove('hidden');
+            }
+            
+            resetForm();
+        }
+
+        function showError(message) {
+            const resultSection = document.getElementById('result-section');
+            const resultText = document.getElementById('result');
+            
+            resultSection.classList.remove('hidden');
+            resultText.textContent = "Error: " + message;
+            resultText.className = "text-lg leading-relaxed mb-6 text-red-600";
+            
+            resetForm();
+        }
+
+        function resetForm() {
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const submitLoading = document.getElementById('submit-loading');
+            
+            submitBtn.disabled = false;
+            submitText.classList.remove('hidden');
+            submitLoading.classList.add('hidden');
+            
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+            
+            currentJobId = null;
+            startTime = null;
+        }
+
+        // Initialize progress circle
+        document.addEventListener('DOMContentLoaded', function() {
+            const circle = document.getElementById('progress-circle');
+            const circumference = 2 * Math.PI * 56;
+            circle.style.strokeDasharray = circumference;
+            circle.style.strokeDashoffset = circumference;
+        });
+    </script>
+</body>
+</html>
