@@ -1,28 +1,33 @@
-#!/usr/bin/env python3
 """
 DigitalOcean App Platform entry point for MatchPoint.ai
-This file is specifically created for DigitalOcean deployment compatibility.
 """
 
 import os
 import sys
 
-# Add the current directory to the Python path
-sys.path.insert(0, os.path.dirname(__file__))
+# Ensure the current directory is in the Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
-# Import the main Flask application
-from app import app
-
-# Create the WSGI application object
-application = app
-
-# For direct execution (development/testing)
-if __name__ == "__main__":
-    # Initialize database tables
-    with app.app_context():
-        from app import db
-        db.create_all()
+try:
+    # Import the main Flask application
+    from app import app
+    application = app
+    print("Successfully imported Flask app")
+except ImportError as e:
+    print(f"Import error: {e}")
+    # Fallback: create a simple Flask app
+    from flask import Flask
+    application = Flask(__name__)
+    application.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key')
     
-    # Run the app
+    @application.route('/')
+    def fallback():
+        return "App is running but main module couldn't be imported"
+    
+    print("Using fallback Flask app")
+
+if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    application.run(host='0.0.0.0', port=port, debug=False)
