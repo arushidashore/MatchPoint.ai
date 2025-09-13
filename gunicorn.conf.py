@@ -1,6 +1,11 @@
-bind = "0.0.0.0:8080"
-workers = 3
-timeout = 120
+import os
+
+bind = f"0.0.0.0:{os.environ.get('PORT', 8080)}"
+workers = int(os.environ.get('WEB_CONCURRENCY', 2))
+timeout = int(os.environ.get('TIMEOUT', 120))
 worker_class = 'gthread'
-threads = 2
-max_requests = 1000
+threads = int(os.environ.get('THREADS', 2))
+max_requests = int(os.environ.get('MAX_REQUESTS', 1000))
+max_requests_jitter = 50
+preload_app = True
+keepalive = 5

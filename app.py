@@ -10,6 +10,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 app = Flask(__name__)
+
+# Production configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'static'  # For processed video
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -17,8 +22,11 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)  # Set log level to DEBUG
+# Configure logging for production
+if app.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 # Load MoveNet model
 movenet = hub.KerasLayer("https://tfhub.dev/google/movenet/singlepose/lightning/4",
@@ -29,8 +37,9 @@ movenet = hub.KerasLayer("https://tfhub.dev/google/movenet/singlepose/lightning/
 #                                    signature="serving_default", signature_outputs_as_dict=True)
 
 # Initialize JWT and SQLAlchemy
-app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # Replace with a secure key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
 
@@ -364,4 +373,10 @@ def add_xp():
     return jsonify({'message': 'XP added successfully', 'new_xp': player.xp})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Initialize database tables
+    with app.app_context():
+        db.create_all()
+    
+    # Run the app
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
