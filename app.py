@@ -28,9 +28,21 @@ if app.debug:
 else:
     logging.basicConfig(level=logging.INFO)
 
-# Load MoveNet model
-movenet = hub.KerasLayer("https://tfhub.dev/google/movenet/singlepose/lightning/4",
-                         signature="serving_default", signature_outputs_as_dict=True)
+# Load MoveNet model lazily to avoid import-time failures
+movenet = None
+
+def get_movenet_model():
+    """Load MoveNet model on first use to avoid import-time failures"""
+    global movenet
+    if movenet is None:
+        try:
+            movenet = hub.KerasLayer("https://tfhub.dev/google/movenet/singlepose/lightning/4",
+                                   signature="serving_default", signature_outputs_as_dict=True)
+            logging.info("MoveNet model loaded successfully")
+        except Exception as e:
+            logging.error(f"Failed to load MoveNet model: {e}")
+            raise e
+    return movenet
 
 # Placeholder for stroke classification model
 # stroke_classifier = hub.KerasLayer("https://tfhub.dev/google/vision-transformer/small/1", 
@@ -103,7 +115,7 @@ def analyze_swing(video_path, height, stroke_type):
         if not ret:
             break
 
-        annotated_frame, keypoints = detect_pose(frame, movenet)
+        annotated_frame, keypoints = detect_pose(frame)
         all_frames.append(annotated_frame)
 
         # Calculate elbow angle (using right arm)
@@ -239,12 +251,15 @@ def analyze_swing(video_path, height, stroke_type):
 
     return " ".join(feedback), '/static/output.mp4'
 
-def detect_pose(frame, movenet):
+def detect_pose(frame, movenet_model=None):
     """Detects pose and draws the skeleton on the frame."""
+    if movenet_model is None:
+        movenet_model = get_movenet_model()
+    
     img = tf.image.resize_with_pad(tf.expand_dims(frame, axis=0), 192, 192)
     img = tf.cast(img, dtype=tf.int32)
     try:
-        outputs = movenet(img)
+        outputs = movenet_model(img)
         keypoints = outputs['output_0'].numpy().squeeze()
     except Exception as e:
         logging.error(f"Error during MoveNet inference: {e}")
