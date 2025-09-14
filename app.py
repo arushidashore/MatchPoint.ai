@@ -1,4 +1,5 @@
 import os
+import sys
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -306,24 +307,73 @@ def classify_stroke(video_path):
 
 @app.route('/')
 def landing():
-    return render_template('landing.html')
+    try:
+        return render_template('landing.html')
+    except Exception as e:
+        logging.error(f"Error rendering landing.html: {e}")
+        return f"""
+        <html>
+        <head><title>MatchPoint.ai</title></head>
+        <body>
+            <h1>Welcome to MatchPoint.ai</h1>
+            <p>Tennis swing analysis using AI</p>
+            <p><a href="/ai-platform">Go to AI Platform</a></p>
+            <p>Error: {str(e)}</p>
+        </body>
+        </html>
+        """, 500
 
 @app.route('/ai-platform')
 def ai_platform():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        logging.error(f"Error rendering index.html: {e}")
+        return f"""
+        <html>
+        <head><title>MatchPoint.ai - AI Platform</title></head>
+        <body>
+            <h1>MatchPoint.ai - AI Platform</h1>
+            <p>Upload your tennis swing video for analysis</p>
+            <form action="/analyze" method="post" enctype="multipart/form-data">
+                <input type="file" name="video" accept="video/*" required><br><br>
+                <input type="number" name="height" placeholder="Your height (cm)" required><br><br>
+                <select name="stroke_type" required>
+                    <option value="forehand">Forehand</option>
+                    <option value="backhand">Backhand</option>
+                    <option value="serve">Serve</option>
+                </select><br><br>
+                <button type="submit">Analyze Swing</button>
+            </form>
+            <p>Error: {str(e)}</p>
+        </body>
+        </html>
+        """, 500
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    if 'video' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
-    file = request.files['video']
-    height = request.form['height']
-    stroke_type = request.form['stroke_type']
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-    file.save(file_path)
-    feedback, video_path = analyze_swing(file_path, height, stroke_type)
-    os.remove(file_path)  # Clean up uploaded file
-    return jsonify({'feedback': feedback, 'video_path': video_path})
+    try:
+        if 'video' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['video']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+            
+        height = request.form.get('height', '170')
+        stroke_type = request.form.get('stroke_type', 'forehand')
+        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(file_path)
+        
+        feedback, video_path = analyze_swing(file_path, height, stroke_type)
+        os.remove(file_path)  # Clean up uploaded file
+        
+        return jsonify({'feedback': feedback, 'video_path': video_path})
+        
+    except Exception as e:
+        logging.error(f"Error in analyze route: {e}")
+        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
@@ -386,6 +436,30 @@ def add_xp():
     player.xp += xp
     db.session.commit()
     return jsonify({'message': 'XP added successfully', 'new_xp': player.xp})
+
+# Debug route to help identify issues
+@app.route('/debug')
+def debug():
+    try:
+        info = {
+            'status': 'App is running',
+            'python_version': sys.version,
+            'flask_version': Flask.__version__,
+            'tensorflow_available': 'tensorflow' in sys.modules,
+            'opencv_available': 'cv2' in sys.modules,
+            'numpy_available': 'numpy' in sys.modules,
+            'upload_folder': app.config['UPLOAD_FOLDER'],
+            'output_folder': app.config['OUTPUT_FOLDER'],
+            'upload_folder_exists': os.path.exists(app.config['UPLOAD_FOLDER']),
+            'output_folder_exists': os.path.exists(app.config['OUTPUT_FOLDER']),
+            'templates_folder': os.path.exists('templates'),
+            'static_folder': os.path.exists('static'),
+            'landing_template': os.path.exists('templates/landing.html'),
+            'index_template': os.path.exists('templates/index.html')
+        }
+        return jsonify(info)
+    except Exception as e:
+        return jsonify({'error': str(e), 'status': 'Debug failed'}), 500
 
 # WSGI application for deployment
 application = app
