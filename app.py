@@ -372,6 +372,9 @@ def add_xp():
     db.session.commit()
     return jsonify({'message': 'XP added successfully', 'new_xp': player.xp})
 
+# WSGI application for deployment
+application = app
+
 if __name__ == '__main__':
     # Initialize database tables
     with app.app_context():
