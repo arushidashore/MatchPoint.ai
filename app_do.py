@@ -14,12 +14,15 @@ try:
     # Import the main Flask application
     from app import app
     application = app
+    # Also create app alias for compatibility
+    app_do_app = app
     print("Successfully imported Flask app")
 except ImportError as e:
     print(f"Import error: {e}")
     # Fallback: create a simple Flask app
     from flask import Flask
     application = Flask(__name__)
+    app_do_app = application
     application.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key')
     
     @application.route('/')
@@ -27,6 +30,9 @@ except ImportError as e:
         return "App is running but main module couldn't be imported"
     
     print("Using fallback Flask app")
+
+# Create app attribute for Gunicorn compatibility
+app = application
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))
