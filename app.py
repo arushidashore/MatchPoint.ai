@@ -476,5 +476,5 @@ if __name__ == '__main__':
         db.create_all()
     
     # Run the app
-    port = int(os.environ.get('PORT', 8000))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
