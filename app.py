@@ -6,6 +6,8 @@ import tensorflow as tf
 import tensorflow_hub as hub
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import logging  # Import logging
+import random
+import string
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -99,7 +101,11 @@ def analyze_swing(video_path, height, stroke_type):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
-    output_path = os.path.join(app.config['OUTPUT_FOLDER'], 'output.mp4')
+
+    characters = string.ascii_letters + string.digits
+    filename = ''.join(random.choice(characters) for _ in range(6)) + '.mp4'
+
+    output_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
     try:
         out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'H264'), fps, (frame_width, frame_height))
     except Exception as e:
@@ -250,7 +256,7 @@ def analyze_swing(video_path, height, stroke_type):
         feedback.append("✅ Your form looks good! Keep practicing.")
 
 
-    return " ".join(feedback), '/static/output.mp4'
+    return " ".join(feedback), '/static/' + filename
 
 def detect_pose(frame, movenet_model=None):
     """Detects pose and draws the skeleton on the frame."""
@@ -470,5 +476,5 @@ if __name__ == '__main__':
         db.create_all()
     
     # Run the app
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8000))
     app.run(host='0.0.0.0', port=port, debug=False)
