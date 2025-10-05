@@ -14,6 +14,8 @@ import seaborn as sns
 from config import ProductionConfig
 from dotenv import load_dotenv
 import time
+import random
+import string
 
 # Load environment variables
 load_dotenv()
@@ -108,7 +110,10 @@ def analyze_swing(video_path, height, stroke_type):
     max_frames = min(150, total_frames)  # Process up to 150 frames or all frames if less
     frame_skip = 2  # Process every 2nd frame for better performance
     
-    output_path = os.path.join(app.config['OUTPUT_FOLDER'], 'output.mp4')
+    characters = string.ascii_letters + string.digits
+    filename = ''.join(random.choice(characters) for _ in range(6)) + '.mp4'
+
+    output_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
     try:
         out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'H264'), fps, (frame_width, frame_height))
     except Exception as e:
@@ -257,7 +262,7 @@ def analyze_swing(video_path, height, stroke_type):
     feedback.append("✅ Your form looks good! Keep practicing.")
     feedback.append(f"📊 Processed {processed_frames} frames for analysis.")
 
-    return " ".join(feedback), '/static/output.mp4'
+    return " ".join(feedback), '/static/' + filename
 
 def detect_pose(frame, movenet):
     """Detects pose and draws the skeleton on the frame."""
