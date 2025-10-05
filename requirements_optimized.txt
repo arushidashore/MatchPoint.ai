@@ -4,7 +4,7 @@ Flask-SQLAlchemy==3.0.5
 Flask-Migrate==4.0.5
 tensorflow-cpu==2.15.0
 tensorflow-hub==0.15.0
-opencv-python-headless==4.8.0.76
+opencv-python==4.8.1.78
 numpy==1.24.3
 matplotlib==3.7.2
 seaborn==0.12.2
