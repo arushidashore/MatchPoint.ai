@@ -114,7 +114,7 @@ def analyze_swing(video_path, height, stroke_type):
 
     output_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
     try:
-        out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'H264'), fps, (frame_width, frame_height))
+        out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'avc1'), fps, (frame_width, frame_height))
     except Exception as e:
         logging.error(f"Error creating VideoWriter: {e}")
         cap.release()
